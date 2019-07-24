@@ -25,7 +25,9 @@ class FlowersListState extends State<FlowersList> {
       return Material(
           child: ListTile(
         title: FlowerCard(
-            key: Key(KeyHelper.getStringKeyForListItem('FlowerCard', index)), flower: flower, index: index),
+            key: Key(KeyHelper.getStringKeyForListItem('FlowerCard', index)),
+            flower: flower,
+            index: index),
         onTap: () {
           _showDetailPage(context, flower[index]);
         },
@@ -54,16 +56,28 @@ class FlowerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+        margin: EdgeInsets.all(0.0),
         key: Key('card'),
         child: Container(
           child: Center(
               child: Row(children: <Widget>[
+            Container(
+              height: 65.0,
+              width: 65.0,
+              margin: EdgeInsets.only(right: 10.0),
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  fit: BoxFit.cover,
+                  image: AssetImage('assets/images/${flower[index].photo}'),
+                ),
+              ),
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
                   flower[index].name,
-                  style: TextStyle(fontSize: 20.0, color: Colors.red),
+                  style: TextStyle(fontSize: 18.0, color: Colors.purple),
                   key: Key('title'),
                 ),
                 Text(
@@ -74,12 +88,12 @@ class FlowerCard extends StatelessWidget {
                 Text(
                   "Category: " + flower[index].category,
                   // set some style to text
-                  style: TextStyle(fontSize: 14.0, color: Colors.green),
+                  style: TextStyle(fontSize: 12.0, color: Colors.green),
                 ),
               ],
-            )
+            ),
           ])),
-          padding: const EdgeInsets.all(15.0),
+          padding: const EdgeInsets.all(5.0),
         ));
   }
 }

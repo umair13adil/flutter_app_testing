@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_testing/models/flower.dart';
+import 'package:palette_generator/palette_generator.dart';
 
 class FlowerDetails extends StatefulWidget {
   final Flower flower;
@@ -12,11 +14,26 @@ class FlowerDetails extends StatefulWidget {
 
 class _FlowerDetailsState extends State<FlowerDetails> {
   final double imageSize = 150.0;
+  Rect region;
+  PaletteGenerator paletteGenerator;
+  Size imageSizeWidget = Size(150.0, 150.0);
+  var isGenerated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    region = Offset.zero & imageSizeWidget;
+  }
+
+  ImageProvider getImage() {
+    return AssetImage('assets/images/${widget.flower.photo}');
+  }
 
   Widget get flowerDetails {
     return Container(
       height: imageSize,
       width: imageSize,
+      margin: EdgeInsets.only(bottom: 20.0),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
@@ -38,7 +55,7 @@ class _FlowerDetailsState extends State<FlowerDetails> {
         ],
         image: DecorationImage(
           fit: BoxFit.cover,
-          image: NetworkImage(widget.flower.photo),
+          image: getImage(),
         ),
       ),
     );
@@ -58,33 +75,52 @@ class _FlowerDetailsState extends State<FlowerDetails> {
     );
   }
 
-  Widget get details {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 32.0),
-      decoration: BoxDecoration(
+  Decoration getBackgroundGradient(List<Color> list) {
+    if (list.isNotEmpty) {
+      return BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          stops: [0.1, 0.5, 0.7, 0.9],
+          stops: [0.1, 0.3, 0.4, 0.5, 0.7, 0.8, 0.9],
           colors: [
-            Colors.green[800],
-            Colors.green[700],
-            Colors.green[600],
-            Colors.green[400],
+            list[0],
+            list[1],
+            list[2],
+            list[3],
+            list[4],
+            list[5],
+            list[6]
           ],
         ),
-      ),
+      );
+    } else {
+      BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          stops: [0.1, 0.3, 0.4, 0.5, 0.7, 0.8, 0.9],
+          colors: [Color(0x33000000)],
+        ),
+      );
+    }
+  }
+
+  Widget getDetails(List<Color> list) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 32.0),
+      decoration: getBackgroundGradient(list),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           flowerDetails,
           Text(
             '${widget.flower.name}',
-            style: TextStyle(fontSize: 32.0),
+            style: TextStyle(fontSize: 28.0),
             key: Key('detailTitle'),
+            textAlign: TextAlign.center,
           ),
           Text(
-            widget.flower.category,
+            "(" + widget.flower.category + ")",
             style: TextStyle(fontSize: 20.0),
           ),
           Padding(
@@ -101,10 +137,53 @@ class _FlowerDetailsState extends State<FlowerDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.flower.name}'),
-      ),
-      body: details,
+        appBar: AppBar(
+          title: Text('${widget.flower.name}'),
+        ),
+        body: Container(
+            child: FutureBuilder<List<Color>>(
+                future: _updatePaletteGenerator(region),
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  if (snapshot.hasData) {
+                    if (snapshot.data != null) {
+                      var list = snapshot.data as List<Color>;
+                      return getDetails(list);
+                    } else {
+                      return _buildProgressBar();
+                    }
+                  } else {
+                    return _buildProgressBar();
+                  }
+                })));
+  }
+
+  Future<List<Color>> _updatePaletteGenerator(Rect newRegion) async {
+    List<Color> listOfColors = new List();
+
+    if (!isGenerated) {
+      isGenerated = true;
+      await PaletteGenerator.fromImageProvider(
+        getImage(),
+        size: imageSizeWidget,
+        region: newRegion,
+        maximumColorCount: 10,
+      ).then((values) {
+        listOfColors.add(values.dominantColor?.color ?? Colors.green[100]);
+        listOfColors.add(values.lightVibrantColor?.color ?? Colors.green[200]);
+        listOfColors.add(values.vibrantColor?.color ?? Colors.green[300]);
+        listOfColors.add(values.lightMutedColor?.color ?? Colors.green[400]);
+        listOfColors.add(values.mutedColor?.color ?? Colors.green[500]);
+        listOfColors.add(values.darkMutedColor?.color ?? Colors.green[800]);
+        listOfColors.add(values.darkVibrantColor?.color ?? Colors.green[900]);
+      });
+    }
+    return listOfColors;
+  }
+
+  Widget _buildProgressBar() {
+    return Center(
+      child: CircularProgressIndicator(),
+      key: Key('progressBar'),
     );
   }
 }
